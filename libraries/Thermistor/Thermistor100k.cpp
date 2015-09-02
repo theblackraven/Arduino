@@ -1,8 +1,8 @@
 /*
-	Thermosistor100k.cpp
+	Thermistor100k.cpp
 */
 
-#include Thermosistor100k.h
+#include Thermistor100k.h
 
 //Consrucotr
 THERMO100K::THERMO100K(int pin)

@@ -1,10 +1,10 @@
 /*
-	Thermosistor100k.h
+	Thermistor100k.h
 */
-#ifndef Thermosistor100k
-#define Thermosistor100k
+#ifndef Thermistor100k
+#define Thermistor100k
 
-class Thermosistor100k
+class Thermistor100k
 {
 	public:
 	THERMO100K(int pin);
