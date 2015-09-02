@@ -1,15 +1,6 @@
-#include <Adafruit_GFX.h>
-
-//-- Andrologiciels TouchPaint example for TFT 2.4 '' ------------//
-// with Spfd5408 controller                                  //
-// (c) AndroLogiciels 2015                                   //
-///////////////////////////////////////////////////////////////
-// You can 'calibrate' the screen with CalX and CalY values  //
-// Multimeter X+ (Pin 6) & X- (pin A2) = 'Sens'itivity value // 
-///////////////////////////////////////////////////////////////
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_TFTLCD.h> // Hardware-specific library
-#include <TouchScreen.h>     // Touch library
+#include <Adafruit_GFX.h>    // Core graphics library from GFX-AndroLociciels (Local Libraris)
+#include <Adafruit_TFTLCD.h> // Hardware-specific library from TFTLCD-AndroLogiciels (Local Libraris)
+#include <TouchScreen.h>     // Touch library from TouchScreenLibrarymaster (Local Libraris)
 #include <TimerOne.h> // Timer 
 #include <Thermistor100k.h>
 //-- Calibrates value
@@ -44,7 +35,10 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, Sens);
 #define MAGENTA 0xF81F
 #define YELLOW  0x07FF
 #define WHITE   0xFFFF
+#define pump_intervall 5 //in seconds
 
+long uptime;
+long second_pump_intervall=0;
 int second=620;
 int second_check;
 int second_modulo;
@@ -59,9 +53,10 @@ boolean set_timer=false;
 boolean time_changed=true; //show default countdown
 boolean pump_on=false;
 boolean pump_status=true;
-boolean warm_status=false;
+boolean warm=false;
 boolean heat_on=false;
 boolean heat_status=true;
+boolean etching=false;
 Thermistor100k thermo;
 
 
@@ -150,7 +145,7 @@ void setup(void) {
 
 void Countdown()
 {
-  secondcount0=secondcount0+1;
+  uptime++;
   if (!stop_timer){
   second=second -1;
   if (second<1){
@@ -158,10 +153,6 @@ void Countdown()
   stop_timer=true;
   second=saved_time;
   }
-  Serial.print(minute, DEC);
-  Serial.print(":");
-  Serial.print(second_modulo, DEC);
-  Serial.print("\n");
   }
 }
 
@@ -170,11 +161,11 @@ void Countdown()
 void loop()
 {
 
-  if (secondcount0!=secondcount1){
-    secondcount1=secondcount0;
+  if (uptime!=secondcount1){
+    secondcount1=uptime;
     Serial.print("\n");
     Serial.print("Uptime in seconds:");
-    Serial.print(secondcount0, DEC);
+    Serial.print(uptime, DEC);
 
 
 
@@ -220,6 +211,7 @@ void loop()
   if (p.x >0 && p.x<40 && p.y > 0 && p.y < 85) { //Set Countdown
   stop_timer=true;
   set_timer=true;
+  etching=false;
   tft.fillRect(0, 70, 50, 40, GREEN);
   tft.fillRect(15, 86, 20, 8, WHITE);
   tft.fillRect(21, 80, 8, 20, WHITE);
@@ -233,27 +225,45 @@ void loop()
 
   tft.fillRect(70, 150, 50, 40, RED);
   tft.fillRect(85, 166, 20, 8, WHITE);
-  
+
+  warm=true;
+  tft.drawRect(235, 0, 85, 45, GREEN);
+  tft.fillRect(235, 0, 85, 45, GREEN);
+  tft.setCursor(250, 15);
+  tft.setTextColor(WHITE);
+  tft.setTextSize(2);
+  tft.println("Warm");
   }
 
   
 
-  if (p.x >0 && p.x<40 && p.y > 119 && p.y < 204) { //start Countdown
+  if (p.x >0 && p.x<40 && p.y > 119 && p.y < 204) { //start etching
   stop_timer=false;
   set_timer=false;
-  pump_on=true;
-  heat_on=true;
+  etching=true;
   tft.fillRect(0, 70, 50, 40, BLACK);
   tft.fillRect(0, 150, 50, 40, BLACK);
   tft.fillRect(70, 70, 50, 40, BLACK);
   tft.fillRect(70, 150, 50, 40, BLACK);
+
+  warm=false;
+  tft.drawRect(235, 0, 85, 45, RED);
+  tft.fillRect(235, 0, 85, 45, RED);
+  tft.setCursor(250, 15);
+  tft.setTextColor(WHITE);
+  tft.setTextSize(2);
+  tft.println("Warm");
+  
   }
 
-  if (p.x >0 && p.x<50 && p.y > 235 && p.y < 320) {
-  pump_on = false;
-  heat_on=false;
-  warm_status = !warm_status;
-  if (warm_status==true)
+  if (p.x >0 && p.x<50 && p.y > 235 && p.y < 320) {  //start or stop warm
+  if (etching==true)
+  {
+  }
+  else
+  {
+  warm = !warm;
+  if (warm==true)
   {
   tft.drawRect(235, 0, 85, 45, GREEN);
   tft.fillRect(235, 0, 85, 45, GREEN);
@@ -261,8 +271,6 @@ void loop()
   tft.setTextColor(WHITE);
   tft.setTextSize(2);
   tft.println("Warm");
-  pump_on=true;
-  heat_on=true;
   }
   else
   {
@@ -272,8 +280,7 @@ void loop()
   tft.setTextColor(WHITE);
   tft.setTextSize(2);
   tft.println("Warm");
-  pump_on=false;
-  heat_on=false;
+  }
   }
   }
 
@@ -399,7 +406,23 @@ void loop()
   heat_status=heat_on;
   }
 
-  
+  if (etching==true or warm==true){
+  heat_on=true;
+  if (warm==true)
+  {
+    if (uptime>second_pump_intervall+pump_intervall){
+    second_pump_intervall=uptime;
+    pump_on=!pump_on;  
+  }
+  }
+  }
+  else
+  {
+    heat_on=false;
+    pump_on=false;
+  }
 
-  
+  if (etching==true){
+  pump_on=true;
+  }
 }
