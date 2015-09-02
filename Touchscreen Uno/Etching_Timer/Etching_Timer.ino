@@ -1,3 +1,5 @@
+#include <Adafruit_GFX.h>
+
 //-- Andrologiciels TouchPaint example for TFT 2.4 '' ------------//
 // with Spfd5408 controller                                  //
 // (c) AndroLogiciels 2015                                   //
@@ -9,6 +11,7 @@
 #include <Adafruit_TFTLCD.h> // Hardware-specific library
 #include <TouchScreen.h>     // Touch library
 #include <TimerOne.h> // Timer 
+#include <Thermistor100k.h>
 //-- Calibrates value
 #define CalX 0
 #define CalY 0
@@ -59,13 +62,9 @@ boolean pump_status=true;
 boolean warm_status=false;
 boolean heat_on=false;
 boolean heat_status=true;
+Thermistor100k thermo;
 
-double start_temp = 0; // at what temp value does the table start
-double temp_step_size = 1; // whats the step size from one value to the next
-static uint8_t const table_size = 100;
-static uint16_t const table[table_size] = {
-235, 244,  254,  264,  275,  285,  296,  306,  317,  328,  339,  351,  362,  373,  385,  396,  408,  420,  431,  443,  454,  466,  478,  489,  501,  512,  523,  535,  546,  557,  568,  579,  589,  600,  610,  620,  630,  640,  650,  660,  669,  678,  688,  696,  705,  714,  722,  730,  738,  746,  754,  761,  768,  775,  782,  789,  796,  802,  808,  814,  820,  826,  831,  837,  842,  847,  852,  857,  862,  866,  871,  875,  879,  883,  887,  891,  895,  898,  902,  905,  909,  912,  915,  918,  921,  924,  926,  929,  932,  934,  937,  939,  941,  943,  946,  948,  950,  952,  954,  955}
-;
+
 
 
 
@@ -178,19 +177,15 @@ void loop()
     Serial.print(secondcount0, DEC);
 
 
-  int adc_value=analogRead(5); //150901 Thermistor added
-   for(int16_t i=1; i<table_size; i++) {
-   if(table[i-1] < adc_value && table[i] > adc_value) {
-      temp_actual = (i*temp_step_size + start_temp) + ((adc_value-table[i-1])/(table[i]-adc_value)*temp_step_size);
-   }
-   }
+
+   
   //actual Temp
   tft.setCursor(180, 145);
   tft.fillRect(178, 143, 75, 28, BLACK);
   tft.drawRect(178, 143, 75, 28, WHITE);
   tft.setTextColor(WHITE, BLACK);
   tft.setTextSize(3);
-  tft.println(temp_actual, 1);
+  tft.println(thermo.get_temp(5), 1);
   }
  
  
