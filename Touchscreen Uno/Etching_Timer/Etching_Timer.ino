@@ -35,7 +35,9 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, Sens);
 #define MAGENTA 0xF81F
 #define YELLOW  0x07FF
 #define WHITE   0xFFFF
-#define pump_intervall 5 //in seconds
+#define pump_intervall_on 5 //in seconds
+#define pump_intervall_off 60 //in seconds
+#define hysterese 2 // Hysterese für Heizzstab in Kelvin
 
 long uptime;
 long second_pump_intervall=0;
@@ -46,8 +48,8 @@ int minute;
 int saved_time;
 int secondcount0=0;
 int secondcount1=0;
-double temp_target=45.0;
-double temp_actual=40.0;
+double temp_target=30.0;
+double temp_last=40.0;
 boolean stop_timer=true;
 boolean set_timer=false;
 boolean time_changed=true; //show default countdown
@@ -123,7 +125,7 @@ void setup(void) {
   tft.drawRect(178, 143, 75, 28, WHITE);
   tft.setTextColor(WHITE, BLACK);
   tft.setTextSize(3);
-  tft.println(temp_actual, 1);
+  tft.println(temp_last, 1);
 
   tft.fillRect(265, 65, 40, 40, GREEN);
   tft.fillRect(275, 81, 20, 8, WHITE);
@@ -149,7 +151,8 @@ void Countdown()
   if (!stop_timer){
   second=second -1;
   if (second<1){
-  pump_on=false;
+  etching=false;
+  warm=true;
   stop_timer=true;
   second=saved_time;
   }
@@ -407,12 +410,25 @@ void loop()
   }
 
   if (etching==true or warm==true){
-  heat_on=true;
+    if (thermo.get_temp(5)<=(temp_target - hysterese) or thermo.get_temp(5)>= (temp_target + hysterese))
+    {
+  if (thermo.get_temp(5)<temp_target)
+  {
+    heat_on=true;
+  }
+  else
+  {
+   heat_on=false;
+  }
+    }
   if (warm==true)
   {
-    if (uptime>second_pump_intervall+pump_intervall){
+    if (uptime>=second_pump_intervall+pump_intervall_on){
     second_pump_intervall=uptime;
-    pump_on=!pump_on;  
+    pump_on=!pump_on;
+    if (pump_on==false){
+      second_pump_intervall=second_pump_intervall+pump_intervall_off-pump_intervall_on;  
+    }
   }
   }
   }
