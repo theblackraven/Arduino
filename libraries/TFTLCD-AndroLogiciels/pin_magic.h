@@ -63,11 +63,9 @@
     ::);
 
 #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined (__AVR_ATmega328__) || defined(__AVR_ATmega8__)
-
  // Arduino Uno, Duemilanove, etc.
 
  #ifdef USE_ADAFRUIT_SHIELD_PINOUT
-
   // LCD control lines:
   // RD (read), WR (write), CD (command/data), CS (chip select)
   #define RD_PORT PORTC				/*pin A0 */
@@ -106,7 +104,6 @@
   #define setReadDirInline()  { DDRD &= ~B11010000; DDRB &= ~B00101111; }
 
  #else // Uno w/Breakout board
-
   #define write8inline(d) {                          \
     PORTD = (PORTD & B00000011) | ((d) & B11111100); \
     PORTB = (PORTB & B11111100) | ((d) & B00000011); \
@@ -134,7 +131,6 @@
  // Arduino Mega, ADK, etc.
 
  #ifdef USE_ADAFRUIT_SHIELD_PINOUT
-
   #define RD_PORT PORTF
   #define WR_PORT PORTF
   #define CD_PORT PORTF

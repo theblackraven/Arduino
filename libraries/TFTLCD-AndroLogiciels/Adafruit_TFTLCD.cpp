@@ -13,10 +13,15 @@
 #ifdef __AVR__
 	#include <avr/pgmspace.h>
 #endif
+
+
+
 #include "pins_arduino.h"
 #include "wiring_private.h"
 #include "Adafruit_TFTLCD.h"
 #include "pin_magic.h"
+
+//
 
 //#define TFTWIDTH   320
 //#define TFTHEIGHT  480

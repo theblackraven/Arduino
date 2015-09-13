@@ -1,8 +1,24 @@
+/*
+Codes for RF 433 MHZ
+Received 5431983 / 24bit Protocol: 1 1 ON
+Received 5431982 / 24bit Protocol: 1 1 OFF
+Received 5431981 / 24bit Protocol: 1 2 ON
+Received 5431980 / 24bit Protocol: 1 2 OFF
+Received 5431979 / 24bit Protocol: 1 3 ON
+Received 5431978 / 24bit Protocol: 1 3 OFF
+Received 5431975 / 24bit Protocol: 1 4 ON
+Received 5431974 / 24bit Protocol: 1 4 OFF
+*/
+
+
+
 #include <Adafruit_GFX.h>    // Core graphics library from GFX-AndroLociciels (Local Libraris)
-#include <Adafruit_TFTLCD.h> // Hardware-specific library from TFTLCD-AndroLogiciels (Local Libraris)
+#include <Adafruit_TFTLCD.h> // Hardware-specific library from TFTLCD-AndroLogiciels (Local Libraris) use for Arduino UNO
 #include <TouchScreen.h>     // Touch library from TouchScreenLibrarymaster (Local Libraris)
 #include <TimerOne.h> // Timer 
 #include <Thermistor100k.h>
+#include <RCSwitch.h> //Transmitting 433 MHZ 
+
 //-- Calibrates value
 #define CalX 0
 #define CalY 0
@@ -39,6 +55,7 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, Sens);
 #define pump_intervall_off 60 //in seconds
 #define hysterese 2 // Hysterese für Heizzstab in Kelvin
 
+
 long uptime;
 long second_pump_intervall=0;
 int second=620;
@@ -48,27 +65,33 @@ int minute;
 int saved_time;
 int secondcount0=0;
 int secondcount1=0;
-double temp_target=30.0;
+double temp_target=47.0;
 double temp_last=40.0;
 boolean stop_timer=true;
 boolean set_timer=false;
 boolean time_changed=true; //show default countdown
 boolean pump_on=false;
 boolean pump_status=true;
+boolean pump_status_rc=false;
+boolean pump_status_rc1=false;
 boolean warm=false;
-boolean heat_on=false;
 boolean heat_status=true;
+boolean heat_on=false;
+boolean heat_status_rc=false;
+boolean heat_status_rc1=false;
 boolean etching=false;
 Thermistor100k thermo;
-
-
-
+RCSwitch mySwitch = RCSwitch();
 
 
 //-- Init LCD
-Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET); //for Uno
 //-- Setup
 void setup(void) {
+
+
+// Transmitter is connected to Arduino Pin #12 (PB4)
+  mySwitch.enableTransmit(12);
   
   Timer1.initialize();                  // Initialise timer 1
   Timer1.attachInterrupt( Countdown );           // attach the ISR routine here
@@ -167,8 +190,15 @@ void loop()
   if (uptime!=secondcount1){
     secondcount1=uptime;
     Serial.print("\n");
-    Serial.print("Uptime in seconds:");
     Serial.print(uptime, DEC);
+    Serial.print(";");
+    Serial.print(thermo.get_temp(5), DEC);
+    Serial.print(";");
+    Serial.print(pump_on, DEC);
+    Serial.print(";");
+    Serial.print(heat_on, DEC);
+   
+    
 
 
 
@@ -429,6 +459,7 @@ void loop()
     if (pump_on==false){
       second_pump_intervall=second_pump_intervall+pump_intervall_off-pump_intervall_on;  
     }
+    
   }
   }
   }
@@ -441,4 +472,42 @@ void loop()
   if (etching==true){
   pump_on=true;
   }
+
+  if (pump_on==true){
+    pump_status_rc=true;
+    if (pump_status_rc!=pump_status_rc1){
+      mySwitch.send(5431983, 24);
+      pump_status_rc1=pump_status;
+      //Serial.print("pump_on");
+    }
+  }
+
+   else
+   {
+   pump_status_rc=false;
+    if (pump_status_rc!=pump_status_rc1){
+     mySwitch.send(5431982, 24); 
+     pump_status_rc1=pump_status;
+     //Serial.print("pump_off");
+    }
+   }
+
+   if (heat_on==true){
+    heat_status_rc=true;
+    if (heat_status_rc!=heat_status_rc1){
+      mySwitch.send(5431981, 24);
+      heat_status_rc1=heat_status;
+      //Serial.print("heat_on");
+    }
+  }
+
+   else
+   {
+   heat_status_rc=false;
+    if (heat_status_rc!=heat_status_rc1){
+     mySwitch.send(5431980, 24); 
+     heat_status_rc1=heat_status;
+     //Serial.print("heat_off");
+    }
+   }
 }
