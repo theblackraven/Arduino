@@ -52,8 +52,8 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, Sens);
 #define YELLOW  0x07FF
 #define WHITE   0xFFFF
 #define pump_intervall_on 5 //in seconds
-#define pump_intervall_off 60 //in seconds
-#define hysterese 2 // Hysterese für Heizzstab in Kelvin
+#define pump_intervall_off 120 //in seconds
+#define hysterese 3 // Hysterese für Heizzstab in Kelvin
 
 
 long uptime;
@@ -198,9 +198,16 @@ void loop()
     Serial.print(";");
     Serial.print(heat_on, DEC);
    
-    
+    if (heat_on==true){   
+      mySwitch.send(5431981, 24);
+  }
 
+   else
+   {
+        mySwitch.send(5431980, 24); 
+    }
 
+  delay(100);
 
    
   //actual Temp
@@ -260,6 +267,7 @@ void loop()
   tft.fillRect(85, 166, 20, 8, WHITE);
 
   warm=true;
+  pump_on=false;
   tft.drawRect(235, 0, 85, 45, GREEN);
   tft.fillRect(235, 0, 85, 45, GREEN);
   tft.setCursor(250, 15);
@@ -492,22 +500,6 @@ void loop()
     }
    }
 
-   if (heat_on==true){
-    heat_status_rc=true;
-    if (heat_status_rc!=heat_status_rc1){
-      mySwitch.send(5431981, 24);
-      heat_status_rc1=heat_status;
-      //Serial.print("heat_on");
-    }
-  }
-
-   else
-   {
-   heat_status_rc=false;
-    if (heat_status_rc!=heat_status_rc1){
-     mySwitch.send(5431980, 24); 
-     heat_status_rc1=heat_status;
-     //Serial.print("heat_off");
-    }
-   }
+  
+   
 }
